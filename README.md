@@ -107,16 +107,6 @@ All outputs live in `work/SAMPLE/` so you can delete or archive entire folders w
 
 ---
 
-## Troubleshooting
-| Symptom | Possible fix |
-|---------|--------------|
-| `STAR2: command not found` | Verify STAR2 is on `$PATH` or inside the conda env. |
-| STAR2 exits with out‑of‑memory error | Build index on a machine with ≥ 32 GB RAM, then copy the index folder back. |
-| `featureCounts` zero counts | Check that the GTF matches the genome build and that `-t gene -g gene_id` suit your annotation. |
-| Slow decompression | Install **pigz** and set `readFilesCommand pigz -dc` in the script. |
-
----
-
 ## Citations
 If you use mrna_lncrna_pipeline.sh in your research, talks, or any published work, please cite it as:
 
