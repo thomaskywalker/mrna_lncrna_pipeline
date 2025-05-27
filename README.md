@@ -119,6 +119,7 @@ All outputs live in `work/SAMPLE/` so you can delete or archive entire folders w
 
 ## Citations
 If you use mrna_lncrna_pipeline.sh in your research, talks, or any published work, please cite it as:
+
 **Huang, P.H. (2025). mRNA & lncRNA STAR2‑featureCounts pipeline. GitHub. https://github.com/thomaskywalker/mrna_lncrna_pipeline**
 
 Also, please cite the original tools when publishing results: **fastp**, **STAR2**, **featureCounts**
