@@ -118,10 +118,10 @@ All outputs live in `work/SAMPLE/` so you can delete or archive entire folders w
 ---
 
 ## Citations
-Please cite the original tools when publishing results:
-* **Chen et al.** fastp: an ultra‑fast all‑in‑one FASTQ preprocessor. *Bioinformatics* (2018).  
-* **Dobin et al.** STAR2: ultrafast universal RNA‑seq aligner. *Bioinformatics* (2023).  
-* **Liao et al.** featureCounts: an efficient general purpose program for assigning sequence reads to genomic features. *Bioinformatics* (2014).
+If you use mrna_lncrna_pipeline.sh in your research, talks, or any published work, please cite it as:
+**Huang, P.H. (2025). mRNA & lncRNA STAR2‑featureCounts pipeline. GitHub. https://github.com/thomaskywalker/mrna_lncrna_pipeline**
+
+Also, please cite the original tools when publishing results: **fastp**, **STAR2**, **featureCounts**
 
 ---
 
