@@ -70,16 +70,24 @@ The first run will create `ref/index_GRCh38_STAR_mRNA/` (~25 GB).
 ---
 
 ## Running the Pipeline
-```bash
-chmod +x mrna_lncrna_pipeline.sh   # make the script executable
 
+### 1. Make executable 
+```bash
+# one-time (if edited on Windows): convert CRLF to LF
+dos2unix mrna_lncrna_pipeline.sh
+# VScode users: click the "CRLF" indicator at the bottom-right corner → choose "LF" → save
+
+chmod +x mrna_lncrna_pipeline.sh   # make the script executable
+```
+### 2. Examples
+```bash
 # run specific samples
 ./mrna_lncrna_pipeline.sh SAMPLE_A SAMPLE_B
 
 # OR run all samples (defined by *_1.fq.gz) under raw/
 ./mrna_lncrna_pipeline.sh all
 ```
-Progress excerpt:
+Progress log looks like:
 ```text
 • fastp QC
 • STAR alignment
