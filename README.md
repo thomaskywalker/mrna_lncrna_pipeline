@@ -117,7 +117,7 @@ Progress log looks like:
 ## How to Cite
 If you use **mrna_lncrna_pipeline.sh** in your research, talks or any published works, please cite:
 
-> Huang, P.H. (2025). *mRNA & lncRNA STAR‑featureCounts pipeline*. GitHub. https://github.com/thomaskywalker/mrna_lncrna_pipeline
+> Huang, P. (2024). mRNA-lncRNA Pipeline (Version 1.0.0) [Computer software]. https://doi.org/10.5281/zenodo.15542604
 
 Please additionally cite the original tools:
 
