@@ -6,5 +6,5 @@ doi: 10.5281/zenodo.15542604
 date-released: 2024-05-29
 authors:
   - family-names: Huang
-    given-names: Pin-Hao
+    given-names: Pin Hao
 repository-code: "https://github.com/thomaskywalker/mrna_lncrna_pipeline"
