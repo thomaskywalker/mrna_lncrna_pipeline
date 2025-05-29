@@ -1,120 +1,123 @@
-# mRNA & lncRNA STAR2-featureCounts Pipeline
+
+# mRNA & lncRNA STAR-featureCounts Pipeline
 
 ## Overview
-A reproducible Bash workflow that trims raw paired-end RNA‑seq reads with **fastp**, aligns them to the human GRCh38 reference using **STAR2**, and quantifies gene‑level counts with **featureCounts**. The script is designed to be idempotent—builds the STAR2 genome index only once and processes an arbitrary number of samples passed on the command line.
+A fully bash-based workflow that  
+1. **trims** and QC-checks paired-end reads with **fastp**;  
+2. **aligns** them to the human GRCh38 reference genome with **STAR**;  
+3. **counts** fragments per gene with **featureCounts** (single combined run);  
+4. Exports a ready‑to‑use **CSV count matrix** for all samples.
+
+The pipeline is **idempotent**: the STAR genome index is built only once, and reruns automatically skip that step if the index already exists.
 
 ---
 
-## Directory Structure
+## Directory Layout
 ```text
 project/
-├── mrna_lncrna_pipeline.sh        # the main Bash script
-├── raw/                           # raw FASTQ.gz files (R1/R2 for each sample)
-│   └── SAMPLE_1.fq.gz
-│   └── SAMPLE_2.fq.gz
-├── ref/                           # reference genome and annotation
+├── mrna_lncrna_pipeline.sh        # this script (make it executable)
+├── raw/                           # raw FASTQ(.gz) files
+│   ├── SAMPLE_A_1.fq.gz           # pair naming: _1 / _2
+│   └── SAMPLE_A_2.fq.gz
+├── ref/                           # reference genome & annotation
 │   ├── GRCh38.primary_assembly.genome.fa
-│   └── gencode.v47.annotation.gtf
-└── work/                          # created automatically; per-sample outputs
+│   └── gencode.v48.annotation.gtf
+└── work/                          # created automatically; all outputs
 ```
-*Feel free to rename folders—just update the corresponding variables at the top of the script.*
+*Keep the above structure or adjust the variables at the top of the script.*
 
 ---
 
-## Hardware Requirements
+## Hardware
 | Resource | Minimum | Recommended |
 |----------|---------|-------------|
-| Operating system | 64‑bit Linux or macOS | Same |
-| CPU cores        | 4 threads     | ≥ 8 threads for faster runs |
-| RAM              | 16 GB         | 32 GB for STAR2 index step |
-| Disk space       | 50 GB free    | 100 GB + for large cohorts |
-
-> **Tip 💡** STAR2 index creation is the most memory‑intensive step. Once the index is built, per‑sample alignment typically stays under ~8 GB RAM.
+| OS       | 64‑bit Linux / WSL2 / macOS | Same |
+| CPU      | 4 threads | ≥ 8 threads |
+| RAM      | 16 GB | 32 GB for smoother STAR indexing |
+| Disk     | 60 GB | 150 GB+ for multi‑sample projects |
 
 ---
 
-## Software Dependencies
-All tools can be installed via **conda** (recommended) or any other package manager of your choice.
+## Software (conda / mamba)
+| Tool | Version | Install command |
+|------|---------|-----------------|
+| fastp | ≥ 0.24 | `mamba install -c bioconda fastp` |
+| STAR  | ≥ 2.7  | `mamba install -c bioconda star` |
+| Subread / featureCounts | ≥ 2.0 | `mamba install -c bioconda subread` |
+| pigz *(optional)* | ≥ 2.4 | `mamba install -c conda-forge pigz` |
 
-| Tool | Version tested | Conda install command |
-|------|---------------|-----------------------|
-| Bash | ≥ 4.0 | *(pre‑installed on most systems)* |
-| fastp | ≥ 0.23.2 | `conda install -c bioconda fastp` |
-| STAR2 | ≥ 2.7.10a | `conda install -c bioconda star2` |
-| Subread / featureCounts | ≥ 2.0.3 | `conda install -c bioconda subread` |
-| pigz *(optional)* | ≥ 2.4 | `conda install -c conda-forge pigz` |
-
-### Create a dedicated environment
+### One‑shot environment creation
 ```bash
-conda create -n rnaseq -c bioconda -c conda-forge fastp star2 subread pigz
+# install mamba once (if not present)
+conda install -n base -c conda-forge mamba
+
+# create RNA‑seq environment
+mamba create -n rnaseq -c bioconda -c conda-forge       fastp star subread pigz samtools
 conda activate rnaseq
 ```
+*(The script can auto‑activate this env if you forget—see header.)*
 
 ---
 
 ## Reference Files
-1. **Genome FASTA** – GRCh38 primary assembly (e.g. `GRCh38.primary_assembly.genome.fa`).  
-2. **Annotation GTF** – GENCODE v47 comprehensive annotation (`gencode.v47.annotation.gtf`).
+Download from GENCODE (v48) and place in `ref/`:
 
-Place both files in the `ref/` directory (or adjust `GENOME_FA` / `GTF_FILE` in the script).
+* `GRCh38.primary_assembly.genome.fa.gz` → **gunzip** → `.fa`  
+* `gencode.v48.annotation.gtf.gz` → **gunzip** → `.gtf`
 
-> STAR2 will generate its own index folder inside `ref/` the first time the script is run (`index_GRCh38_STAR_mRNA` by default).
+The first run will create `ref/index_GRCh38_STAR_mRNA/` (~25 GB).
 
 ---
 
-## Quick Start
+## Running the Pipeline
 ```bash
-# 1. clone or copy this repository
-cd project
+chmod +x mrna_lncrna_pipeline.sh   # make the script executable
 
-# 2. make the pipeline executable (once)
-chmod +x mrna_lncrna_pipeline.sh
+# run specific samples
+./mrna_lncrna_pipeline.sh SAMPLE_A SAMPLE_B
 
-# 3. drop your FASTQ pairs into raw/ using SAMPLE_1.fq.gz / SAMPLE_2.fq.gz naming
-
-# 4. run the pipeline on one or multiple samples
-./mrna_lncrna_pipeline.sh SAMPLE1 SAMPLE2 SAMPLE3
+# OR run all samples (defined by *_1.fq.gz) under raw/
+./mrna_lncrna_pipeline.sh all
 ```
-Per-sample progress is echoed to the terminal:
+Progress excerpt:
 ```text
 • fastp QC
-• STAR2 alignment
-• featureCounts quantification
-… done ✔
+• STAR alignment
+• Running featureCounts on 12 BAM files
+➜ Combined matrix saved to work/mRNA.lncRNA.counts.csv
 ```
 
 ---
 
-## Output Files (per sample)
-| File | Description |
+## Outputs
+| Path | Description |
 |------|-------------|
-| `*_1/2.clean.fq.gz` | Adapter‑trimmed, quality‑filtered reads (fastp) |
-| `*Aligned.sortedByCoord.out.bam` | Genome‑sorted BAM with alignments (STAR2) |
-| `*Aligned.toTranscriptome.out.bam` | BAM in transcriptome coordinates (optional downstream quantification) |
-| `*ReadsPerGene.out.tab` | STAR2‑generated raw counts table |
-| `*counts.txt` & `*counts.txt.summary` | featureCounts gene‑level matrix & summary |
-| `*.fastp.html` / `*.fastp.json` | QC reports |
-
-All outputs live in `work/SAMPLE/` so you can delete or archive entire folders without affecting other samples.
+| `work/SAMPLE/…clean.fq.gz` | trimmed reads (fastp) |
+| `work/SAMPLE/*Aligned.sortedByCoord.out.bam` | coordinate‑sorted genome BAM |
+| `work/SAMPLE/*ReadsPerGene.out.tab` | STAR per‑sample raw counts |
+| **`work/mRNA.lncRNA.counts.csv`** | gene × sample count matrix |
 
 ---
 
-## Customisation
-* **Change read length** – adjust `sjdbOverhang` in the index‑building block (`readLength − 1`).
-* **Turn on extra fastp filters** – add flags such as `--cut_front` or `--poly_g_min_len`.
-* **Use UMI workflows** – insert UMI‑tools steps between fastp and STAR2.
-* **Different organism** – substitute FASTA/GTF files and rebuild the STAR2 index.
+## Customisation Tips
+* **Other read length** → change `sjdbOverhang` (readLen − 1) in the index block.  
+* **Different filename pattern** (`_R1.fastq.gz`) → adjust both the `find` pattern and `R1/R2` variable lines.  
+* **Disk‑tight?** → drop `TranscriptomeSAM`, delete `*.clean.fq.gz` at the end of each loop, or remove the intermediate TSV after CSV is generated.  
 
 ---
 
-## Citations
-If you use mrna_lncrna_pipeline.sh in your research, talks, or any published work, please cite it as:
+## How to Cite
+If you use **mrna_lncrna_pipeline.sh** in your research, talks or any published works, please cite:
 
-**Huang, P.H. (2025). *mRNA & lncRNA STAR2‑featureCounts pipeline*. GitHub. https://github.com/thomaskywalker/mrna_lncrna_pipeline**
+> Huang, P.H. (2025). *mRNA & lncRNA STAR‑featureCounts pipeline*. GitHub. https://github.com/thomaskywalker/mrna_lncrna_pipeline
 
-Also, please cite the original tools when publishing results: **fastp**, **STAR2**, **featureCounts**
+Please additionally cite the original tools:
+
+* **fastp** 
+* **STAR**
+* **featureCounts**  
 
 ---
 
 ## License
-Distributed under the MIT License. See `LICENSE` file for details.
+MIT — see `LICENSE`.
